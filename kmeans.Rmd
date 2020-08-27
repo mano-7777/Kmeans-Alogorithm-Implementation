@@ -1,0 +1,96 @@
+---
+title: "Kmeans"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+K Means Clustering Project
+Usually when dealing with an unsupervised learning problem, its difficult to get a good measure of how well the model performed. For this project, we will use data from the UCI archive based off of red and white wines (this is a very commonly used data set in ML).
+
+We will then add a label to the a combined data set, we'll bring this label back later to see how well we can cluster the wine into groups.
+
+Get the Data
+
+```{r}
+library(readr)
+df1 <- read.csv('winequality-red.csv',sep=';')
+df2 <- read.csv('winequality-white.csv',sep=';')
+```
+Checking the head of both dataset
+```{r}
+df1$label <- sapply(df1$pH,function(x){'red'})
+df2$label <- sapply(df2$pH,function(x){'white'})
+```
+
+```{r}
+head(df1)
+```
+```{r}
+head(df2)
+```
+
+```{r}
+wine <- rbind(df1,df2)
+```
+
+```{r}
+str(wine)
+```
+EDA
+
+
+```{r}
+library(ggplot2)
+pl <- ggplot(wine,aes(x=residual.sugar)) + geom_histogram(aes(fill=label),color='black',bins=50)
+pl + scale_fill_manual(values = c('#ae4554','#F2E4B7')) + theme_bw()
+```
+
+```{r}
+ggplot(wine,aes(citric.acid))+geom_histogram(bins = 50,aes(fill=label),color='black')+
+  scale_fill_manual(values = c('#ae4554','#F2E4B7'))
+```
+
+```{r}
+ggplot(wine,aes(alcohol))+geom_histogram(bins = 50,aes(fill=label),color='black')+
+  scale_fill_manual(values = c('#ae4554','#F2E4B7'))
+```
+
+
+
+```{r}
+ggplot(wine,aes(citric.acid,residual.sugar))+geom_point(alpha=0.2,aes(color=label))+theme_dark()+
+  scale_color_manual(values = c('#ae4554','#faf7ea'))
+```
+
+```{r}
+ggplot(wine,aes(volatile.acidity,residual.sugar))+geom_point(alpha=0.2,aes(color=label))+theme_dark()+
+  scale_color_manual(values = c('#ae4554','#faf7ea'))
+```
+
+Creating the clus.data without the lable column
+```{r}
+clus.data <- wine[,1:12]
+head(clus.data)
+```
+Buliding the clusters
+
+```{r}
+wine.cluster <-kmeans(clus.data,2)
+print(wine.cluster)
+```
+
+```{r}
+print(wine.cluster$centers)
+```
+
+Evaluating the Clusters
+```{r}
+table(wine$label,wine.cluster$cluster)
+```
+
+We can see that red is easier to cluster together, which makes sense given our previous visualizations. There seems to be a lot of noise with white wines, this could also be due to "Rose" wines being categorized as white wine, while still retaining the qualities of a red wine. Overall this makes sense since wine is essentially just fermented grape juice and the chemical measurements we were provided may not correlate well with whether or not the wine is red or white!
+
+It's important to note here, that K-Means can only give you the clusters, it can't directly tell you what the labels should be, or even how many clusters you should have, we are just lucky to know we expected two types of wine. This is where domain knowledge really comes into play.
